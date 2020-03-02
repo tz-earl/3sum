@@ -12,9 +12,11 @@ class Solution1:
 
     # For (2), build a dict such that for each pair of negative integers in the list,
     # the key is the sum of the pair, and the value is the pair of negatives.
+    # Then iterate over the positive integers and for each, find its 'complement' of two negative integers.
 
     # Similarly, for (3) build a dict such that for each pair of positive integers in the list,
     # the key is the sum of the pair, and the value is the pair of positives.
+    # Then iterate over the negative integers and for each, find its 'complement' of two positive integers.
 
     # This runs slowly and timed out on Leetcode.
     # The runtime order is O(n^2) but with several sequential operations of this order.
@@ -49,9 +51,9 @@ class Solution1:
                 else:
                     neg_sums[s] = neg_sums[s] + [list(p) + [-s]]
 
-            ## For each positive integer, look for a corresponding pair of negative integers.
-            ## But remove any duplicates among the positive integers, otherwise, we will
-            ## generate duplicate results among the triples.
+            # For each positive integer, look for a corresponding pair of negative integers.
+            # But remove any duplicates among the positive integers, otherwise, we will
+            # generate duplicate results among the triples.
             for pos in set(pos_nums):  # O(n)
                 if -pos in neg_sums:    # O(n)
                     ret_val += neg_sums[-pos]
@@ -78,9 +80,9 @@ class Solution1:
                 else:
                     pos_sums[s] = pos_sums[s] + [list(p) + [-s]]
 
-            ## For each negative integer, look for a corresponding pair of positive integers.
-            ## But remove any duplicates among the negative integers, otherwise, we will
-            ## generate duplicate results among the triples.
+            # For each negative integer, look for a corresponding pair of positive integers.
+            # But remove any duplicates among the negative integers, otherwise, we will
+            # generate duplicate results among the triples.
             for neg in set(neg_nums):
                 if -neg in pos_sums:
                     ret_val += pos_sums[-neg]
@@ -112,23 +114,123 @@ class Solution1:
 
 # =================================================================================
 
+from typing import List, Tuple, Union
+
+
+class Solution2:
+    """Given an array nums of n integers, are there elements a, b, c in nums such that a + b + c = 0?
+    Find all unique triplets in the array which gives the sum of zero."""
+
+    # This solution is to iterate over the list for the first number, then for each first number,
+    # iterate over the list to get the second number, finally, do a binary search to find the
+    # third number.
+
+    # This solution runs even more slowly than Solution1 and timed out on Leetcode.
+    # The runtime order is something like O(n^2 * lg n), which I didn't realize until after coding it.
+
+    @staticmethod
+    def threeSum(nums: List[int]) -> List[Tuple[int]]:
+        """Find all unique triples that sum to zero"""
+
+        def twoSum(target: int) -> List[List[int]]:
+            """Find all pairs of numbers in the list that add to the target.
+            But do not use any list item twice."""
+
+            def search_binary(val: int) -> Union[int, None]:
+                """Do a binary search through the sorted nums_with_idx for the target int.
+                If found, return the index of target in the list, otherwise, return None.
+                This function allows for the possibility of a value occurring more
+                than once in the list of nums, including a value already in play."""
+
+                left = 0
+                right = len(nums_with_idx) - 1
+                while left <= right:  # O(lg n)
+                    mid = (left + right) // 2
+                    if nums_with_idx[mid][0] == val:
+                        if nums_in_play[mid] is False:
+                            return nums_with_idx[mid][1]
+                        elif nums_with_idx[mid][0] < val:
+                            left = mid + 1
+                        else:
+                            right = mid - 1
+                    elif nums_with_idx[mid][0] < val:
+                        left = mid + 1
+                    else:
+                        right = mid - 1
+
+                return None
+
+            pairs = []
+            for j in range(len(nums_with_idx)):  # O(n)
+                if nums_in_play[j] is True:
+                    continue
+
+                nwi = nums_with_idx[j]
+                nums_in_play[j] = True
+
+                diff = target - nwi[0]
+                k = search_binary(diff)
+
+                if k is not None:
+                    pairs.append([nwi[0], nums[k]])
+
+                nums_in_play[j] = False
+
+            return pairs
+
+        # --------------------------
+
+        ret_val = []
+
+        if len(nums) <= 2:
+            return []
+
+        # These two variables are used within the embedded functions, ie. they are nonlocal
+        nums_with_idx = sorted([(tup[1], tup[0]) for tup in enumerate(nums)])
+        nums_in_play = [False for _ in range(len(nums_with_idx))]
+
+        for i in range(len(nums_with_idx)):  # O(n)
+            nwi = nums_with_idx[i]
+            nums_in_play[i] = True
+
+            pairs = twoSum(-nwi[0])  # Find pairs of numbers that add to the negative of the current one.
+            triples = [(nwi[0], p[0], p[1]) for p in pairs]
+            ret_val += triples
+
+            nums_in_play[i] = False
+
+        sorted_vals = [tuple(sorted(t)) for t in ret_val]
+        no_dups_val = set(no_dups for no_dups in sorted_vals)
+        ret_val = list(no_dups_val)
+
+        return ret_val
+
+
+# =================================================================================
+
 nums_1 = [-1, 0, 1, 2, -1, -4]
 print(Solution1().threeSum(nums_1))
+print(Solution2().threeSum(nums_1))
 
 nums_2 = [-1, 0, 1, 2, -1, -4, 2]
 print(Solution1().threeSum(nums_2))
+print(Solution2().threeSum(nums_2))
 
 nums_3 = [3, -6]
 print(Solution1().threeSum(nums_3))
+print(Solution2().threeSum(nums_3))
 
 nums_4 = [0, 0]
 print(Solution1().threeSum(nums_4))
+print(Solution2().threeSum(nums_4))
 
 nums_5 = [-1, 0, 1, 0]
 print(Solution1().threeSum(nums_5))
+print(Solution2().threeSum(nums_5))
 
 # This is one of the large test cases from Leetcode for which solutions time out.
-# There are 3000 numbers in the list. There are over 16_258 triples in the set of results.
+# There are 3000 numbers in the list.
+# There are over 16_000 triples in the set of results.
 nums_large_set = [82597, -9243, 62390, 83030, -97960, -26521, -61011, 83390, -38677, 12333, 75987, 46091, 83794, 19355,
                   -71037, -6242, -28801, 324, 1202, -90885, -2989, -95597, -34333, 35528, 5680, 89093, -90606, 50360,
                   -29393, -27012, 53313, 65213, 99818, -82405, -41661, -3333, -51952, 72135, -1523, 26377, 74685, 96992,
@@ -356,3 +458,6 @@ nums_large_set = [82597, -9243, 62390, 83030, -97960, -26521, -61011, 83390, -38
 
 large_set_result_1 = Solution1().threeSum(nums_large_set)
 print(len(large_set_result_1))
+
+large_set_result_2 = Solution2().threeSum(nums_large_set)
+print(len(large_set_result_2))
