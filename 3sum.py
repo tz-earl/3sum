@@ -208,25 +208,111 @@ class Solution2:
 
 # =================================================================================
 
+from typing import List, Union
+
+
+class Solution3:
+    """Given an array nums of n integers, are there elements a, b, c in nums such that a + b + c = 0?
+    Find all unique triplets in the array which gives the sum of zero."""
+
+    # This solution is to iterate over the list for the first number. For each first number,
+    # iterate over the list to get the second number. Finally, do a dict lookup to find the
+    # third number.
+
+    # This solution runs much much faster than Solution1 and Solution2 but still times out on Leetcode.
+    # The runtime order is O(n^2)
+
+    @staticmethod
+    def threeSum(nums: List[int]) -> List[List[int]]:
+        """Find all unique triples that sum to zero"""
+
+        def twoSum(target: int, start: int) -> List[List[int]]:
+            """Find all pairs of numbers in the list that add to the target.
+            But do not use any list item twice."""
+
+            def search_dict(val: int) -> Union[int, None]:
+
+                if val in nums_with_counts and nums_with_counts[val] >= 1:
+                    return val
+
+                return None
+
+            pairs = []
+            for j in range(start, len(nums)):  # O(n)
+                second = nums[j]
+
+                nums_with_counts[second] -= 1
+
+                diff = target - second
+                third = search_dict(diff)
+
+                if third is not None:
+                    pairs.append([second, third])
+
+                nums_with_counts[second] += 1
+
+            return pairs
+
+        # --------------------------
+
+        #  Build a dict in which the keys are the numbers found in the nums list, and
+        #  the value of each key is the number of occurrences for each number.
+        #  As each number in the list comes into play, decrement its count in the dict
+        #  to indicate how many of those numbers are still available.
+
+        nums_with_counts = dict()
+        for n in nums:  # O(n)
+            if n in nums_with_counts:
+                nums_with_counts[n] += 1
+            else:
+                nums_with_counts[n] = 1
+
+        all_triples = []
+
+        for i in range(len(nums)):  # O(n)
+            first = nums[i]
+            nums_with_counts[first] -= 1
+
+            twosomes = twoSum(-first, i + 1)  # Find pairs of numbers that add to the negative of the current one.
+            triples = [(first, p[0], p[1]) for p in twosomes]
+            all_triples += triples
+
+            nums_with_counts[first] += 1
+
+        # Within each triple, sort the three numbers so we can find the duplicates.
+        triples_sorted = [tuple(sorted(t)) for t in all_triples]  # O(n lg n)
+        triples_no_dups = set(no_dups for no_dups in triples_sorted)
+        all_triples = list(triples_no_dups)
+
+        return all_triples
+
+
+# =================================================================================
+
 nums_1 = [-1, 0, 1, 2, -1, -4]
 print(Solution1().threeSum(nums_1))
 print(Solution2().threeSum(nums_1))
+print(Solution3().threeSum(nums_1))
 
 nums_2 = [-1, 0, 1, 2, -1, -4, 2]
 print(Solution1().threeSum(nums_2))
 print(Solution2().threeSum(nums_2))
+print(Solution3().threeSum(nums_2))
 
 nums_3 = [3, -6]
 print(Solution1().threeSum(nums_3))
 print(Solution2().threeSum(nums_3))
+print(Solution3().threeSum(nums_3))
 
 nums_4 = [0, 0]
 print(Solution1().threeSum(nums_4))
 print(Solution2().threeSum(nums_4))
+print(Solution3().threeSum(nums_4))
 
 nums_5 = [-1, 0, 1, 0]
 print(Solution1().threeSum(nums_5))
 print(Solution2().threeSum(nums_5))
+print(Solution3().threeSum(nums_5))
 
 # This is one of the large test cases from Leetcode for which solutions time out.
 # There are 3000 numbers in the list.
@@ -461,3 +547,6 @@ print(len(large_set_result_1))
 
 large_set_result_2 = Solution2().threeSum(nums_large_set)
 print(len(large_set_result_2))
+
+large_set_result_3 = Solution3().threeSum(nums_large_set)
+print(len(large_set_result_3))
