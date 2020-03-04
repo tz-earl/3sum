@@ -6,7 +6,7 @@ class Solution1:
     Find all unique triplets in the array which gives the sum of zero."""
 
     # This solution uses the fact that satisfying triples are of three kinds:
-    # (1)  (-num, 0, num) for any integer num
+    # (1)  (-num, 0, num) for any non-zero integer num
     # (2)  (pos, neg, neg)  where one integer is positive and the other two are negative, in any order.
     # (3)  (neg, pos, pos)  where one integer is negative and the other two are positive, in any order.
 
@@ -289,30 +289,163 @@ class Solution3:
 
 # =================================================================================
 
+from typing import List
+
+
+class Solution4:
+    """Given an array nums of n integers, are there elements a, b, c in nums such that a + b + c = 0?
+    Find all unique triplets in the array which gives the sum of zero."""
+
+    # As with Solution1, this solution uses the fact that satisfying triples are of three kinds:
+    # (1)  (-num, 0, num) for any non-zero integer num, provided that a zero is in the list.
+    # (2)  (pos, neg, neg)  where one integer is positive and the other two are negative, in any order.
+    # (3)  (neg, pos, pos)  where one integer is negative and the other two are positive, in any order.
+
+    # (4) Special case: (0, 0, 0) if there are at least three zeroes in the list.
+
+    # For all the positive numbers, build a dict such that each number is the key and its value is the
+    # count of occurrences of that number in the list. Similarly do so for the negative numbers.
+
+    # (1) If a zero exists in the list, iterate over the positive numbers and try to look up its negative.
+    # There's no need to iterate over the negative numbers since anything found would be a dupicate.
+
+    # (2) Iterate over the positive integers and for each, find its 'complement' of two negative integers.
+    # (3) Similarly, iterate over the negative integers and for each, find its 'complement' of two positive integers.
+
+    # This solution runs the fastest of all four and was accepted by Leetcode without timing out.
+    # The runtime order is O(n^2) but with fewer operations compared with Solution3.
+
+    @staticmethod
+    def threeSum(nums: List[int]) -> List[List[int]]:
+
+        def find_pairs() -> List[List[int]]:
+            """Find all triples of the form (-n, 0, +n)"""
+            ret_val = []
+            for n in pos_with_counts.keys():
+                if -n in neg_with_counts:
+                    ret_val.append([-n, 0, n])
+
+            return ret_val
+
+        def find_triplets_1() -> List[List[int]]:
+            """Find triplets with two negative numbers and one positive"""
+            ret_val = []
+
+            # For each positive integer, look for a corresponding pair of negative integers.
+            # Remove any duplicates among the positive integers, otherwise, we will
+            # generate duplicate results among the triples.
+            for pos in pos_with_counts.keys():
+                for neg in neg_with_counts.keys():
+                    neg_with_counts[neg] -= 1
+
+                    diff = -(pos + neg)
+                    if diff < 0 and diff in neg_with_counts and neg_with_counts[diff] >= 1:
+                        if neg <= diff:  # Otherwise, this triple will be a duplicate.
+                            ret_val.append([neg, diff, pos])
+
+                    neg_with_counts[neg] += 1
+
+            return ret_val
+
+        def find_triplets_2() -> List[List[int]]:
+            """Find triplets with two positive numbers and one negative"""
+            ret_val = []
+
+            # For each negative integer, look for a corresponding pair of positive integers.
+            # Remove any duplicates among the negative integers, otherwise, we will
+            # generate duplicate results among the triples.
+            for neg in neg_with_counts.keys():
+                for pos in pos_with_counts.keys():
+                    pos_with_counts[pos] -= 1
+
+                    diff = -(neg + pos)
+                    if diff > 0 and diff in pos_with_counts and pos_with_counts[diff] >= 1:
+                        if pos <= diff:  # Otherwise, this triple will be a duplicate.
+                            ret_val.append([neg, pos, diff])
+
+                    pos_with_counts[pos] += 1
+
+            return ret_val
+
+        # --------------------------
+
+        all_triples = []
+
+        # First build three different sublists of the input list, and sort each of them
+        # (1) list of all negative integers
+        # (2) list of all zeroes
+        # (3) list of all positive integers
+
+        neg_nums = [n for n in nums if n < 0]
+        zero_nums = [n for n in nums if n == 0]
+        pos_nums = [n for n in nums if n > 0]
+
+        # Use a dict in which the keys are the numbers found in the nums list, and
+        # the value of each key is the number of occurrences for each number.
+        # As each number in the list comes into play, decrement its count in the dict
+        # to indicate how many of those numbers are still available.
+        #
+        # For slightly better clarity and perhaps faster runtime, build two dicts,
+        # one for positive nums and one for negative nums.
+
+        neg_with_counts = dict()
+        for n in neg_nums:
+            if n in neg_with_counts:
+                neg_with_counts[n] += 1
+            else:
+                neg_with_counts[n] = 1
+
+        pos_with_counts = dict()
+        for n in pos_nums:
+            if n in pos_with_counts:
+                pos_with_counts[n] += 1
+            else:
+                pos_with_counts[n] = 1
+
+        # Special case: at least three zeros are in the list.
+        if len(zero_nums) >= 3:
+            all_triples.append([0, 0, 0])
+
+        if len(zero_nums) >= 1:
+            all_triples += find_pairs()
+
+        all_triples += find_triplets_1()
+        all_triples += find_triplets_2()
+
+        return all_triples
+
+
+# =================================================================================
+
 nums_1 = [-1, 0, 1, 2, -1, -4]
 print(Solution1().threeSum(nums_1))
 print(Solution2().threeSum(nums_1))
 print(Solution3().threeSum(nums_1))
+print(Solution4().threeSum(nums_1))
 
 nums_2 = [-1, 0, 1, 2, -1, -4, 2]
 print(Solution1().threeSum(nums_2))
 print(Solution2().threeSum(nums_2))
 print(Solution3().threeSum(nums_2))
+print(Solution4().threeSum(nums_2))
 
 nums_3 = [3, -6]
 print(Solution1().threeSum(nums_3))
 print(Solution2().threeSum(nums_3))
 print(Solution3().threeSum(nums_3))
+print(Solution4().threeSum(nums_3))
 
 nums_4 = [0, 0]
 print(Solution1().threeSum(nums_4))
 print(Solution2().threeSum(nums_4))
 print(Solution3().threeSum(nums_4))
+print(Solution4().threeSum(nums_4))
 
 nums_5 = [-1, 0, 1, 0]
 print(Solution1().threeSum(nums_5))
 print(Solution2().threeSum(nums_5))
 print(Solution3().threeSum(nums_5))
+print(Solution4().threeSum(nums_5))
 
 # This is one of the large test cases from Leetcode for which solutions time out.
 # There are 3000 numbers in the list.
@@ -550,3 +683,6 @@ print(len(large_set_result_2))
 
 large_set_result_3 = Solution3().threeSum(nums_large_set)
 print(len(large_set_result_3))
+
+large_set_result_4 = Solution4().threeSum(nums_large_set)
+print(len(large_set_result_4))
